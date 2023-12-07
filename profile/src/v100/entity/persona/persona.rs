@@ -41,14 +41,31 @@ pub struct Persona {
 }
 
 impl Persona {
-    pub fn new(address: IdentityAddress, display_name: DisplayName) -> Self {
+    pub fn new(
+        address: IdentityAddress,
+        display_name: DisplayName,
+        extra_properties: ExtraProperties,
+    ) -> Self {
         Self {
             network_id: address.network_id,
             address,
             security_state: EntitySecurityState::placeholder(),
             display_name: RefCell::new(display_name),
             flags: RefCell::new(EntityFlags::default()),
-            persona_data: todo!(),
+            persona_data: extra_properties.persona_data,
         }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ExtraProperties {
+    #[serde(rename = "personaData")]
+    persona_data: PersonaData,
+}
+
+impl ExtraProperties {
+    pub fn new(persona_data: PersonaData) -> Self {
+        Self { persona_data }
     }
 }
