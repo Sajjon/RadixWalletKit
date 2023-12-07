@@ -1,3 +1,4 @@
+use crate::v100::entity::persona::persona_data::collection_error::CollectionError;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::fmt::Display;
@@ -55,7 +56,7 @@ pub struct CollectionOfIdentifiedEntries<Value> {
     collection: Vec<IdentifiedEntry<Value>>,
 }
 
-impl<Value: Default + std::cmp::Eq + std::cmp::Ord> CollectionOfIdentifiedEntries<Value> {
+impl<Value: Default + std::cmp::Eq + std::cmp::Ord + Copy> CollectionOfIdentifiedEntries<Value> {
     pub fn default() -> Self {
         Self { collection: vec![] }
     }
@@ -73,13 +74,12 @@ impl<Value: Default + std::cmp::Eq + std::cmp::Ord> CollectionOfIdentifiedEntrie
     }
 
     pub fn add(&mut self, field: IdentifiedEntry<Value>) -> Result<(), CollectionError> {
-        // Need to fix double reference of field.value
         if self
             .collection
             .iter()
-            .map(|item| &item.value)
-            .collect::<Vec<_>>()
-            .contains(&&field.value)
+            .map(|item| item.value)
+            .collect::<Vec<Value>>()
+            .contains(&field.value)
         {
             return Err(CollectionError::DuplicateValuesFound);
         }
@@ -88,7 +88,7 @@ impl<Value: Default + std::cmp::Eq + std::cmp::Ord> CollectionOfIdentifiedEntrie
             .collection
             .iter()
             .map(|item| item.id)
-            .collect::<Vec<_>>()
+            .collect::<Vec<Uuid>>()
             .contains(&field.id)
         {
             return Err(CollectionError::DuplicateIDOfValuesFound);
@@ -98,15 +98,32 @@ impl<Value: Default + std::cmp::Eq + std::cmp::Ord> CollectionOfIdentifiedEntrie
 
         Ok(())
     }
-}
 
-use thiserror::Error;
+    pub fn update(&mut self, updated: IdentifiedEntry<Value>) -> Result<(), CollectionError> {
+        if !self
+            .collection
+            .iter()
+            .map(|item| item.id)
+            .collect::<Vec<Uuid>>()
+            .contains(&updated.id)
+        {
+            return Err(CollectionError::PersonaFieldCollectionValueWithIDNotFound);
+        }
+        let index = self
+            .collection
+            .iter()
+            .position(|value| value.to_owned() == updated)
+            .expect("Should find index since collection contains the ID");
 
-#[derive(Debug, Error, PartialEq)]
-pub enum CollectionError {
-    #[error("Duplicate values found when construction collection")]
-    DuplicateValuesFound,
+        self.collection.insert(index, updated);
 
-    #[error("Duplicate id of values found when construction collection")]
-    DuplicateIDOfValuesFound,
+        Ok(())
+    }
+
+    pub fn description(&self) -> String {
+        self.collection
+            .iter()
+            .map(|_| Self::description(self))
+            .collect()
+    }
 }
