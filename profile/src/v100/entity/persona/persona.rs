@@ -7,15 +7,14 @@ use radix_engine_common::prelude::RefCell;
 use serde::{Deserialize, Serialize};
 use wallet_kit_common::network_id::NetworkID;
 
-/// A network unique account with a unique public address and a set of cryptographic
-/// factors used to control it. The account is either `virtual` or not. By "virtual"
+/// A network unique identity with a unique public address and a set of cryptographic
+/// factors used to control it. The identity is either `virtual` or not. By "virtual"
 /// we mean that the Radix Public Ledger does not yet know of the public address
-/// of this account.
+/// of this identity.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Persona {
     /// The ID of the network this persona exists on.
-    #[serde(rename = "networkID")]
     pub network_id: NetworkID,
 
     /// The globally unique and identifiable Radix component address of this persona. Can be used as
@@ -24,19 +23,16 @@ pub struct Persona {
     pub address: IdentityAddress,
 
     /// Security of this persona
-    #[serde(rename = "securityState")]
     security_state: EntitySecurityState,
 
     /// A required non empty display name, used by presentation layer and sent to Dapps when requested.
-    #[serde(rename = "displayName")]
     display_name: RefCell<DisplayName>,
 
     /// An order set of `EntityFlag`s used to describe certain Off-ledger
-    /// user state about Accounts or Personas, such as if an entity is
+    /// user state about Identities or Personas, such as if an entity is
     /// marked as hidden or not.
     pub flags: RefCell<EntityFlags>,
 
-    #[serde(rename = "personaData")]
     persona_data: PersonaData,
 }
 
@@ -44,7 +40,7 @@ impl Persona {
     pub fn new(
         address: IdentityAddress,
         display_name: DisplayName,
-        extra_properties: ExtraProperties,
+        persona_data: PersonaData,
     ) -> Self {
         Self {
             network_id: address.network_id,
@@ -52,20 +48,7 @@ impl Persona {
             security_state: EntitySecurityState::placeholder(),
             display_name: RefCell::new(display_name),
             flags: RefCell::new(EntityFlags::default()),
-            persona_data: extra_properties.persona_data,
+            persona_data: persona_data,
         }
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct ExtraProperties {
-    #[serde(rename = "personaData")]
-    persona_data: PersonaData,
-}
-
-impl ExtraProperties {
-    pub fn new(persona_data: PersonaData) -> Self {
-        Self { persona_data }
     }
 }
