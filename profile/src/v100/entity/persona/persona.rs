@@ -15,6 +15,7 @@ use wallet_kit_common::network_id::NetworkID;
 #[serde(rename_all = "camelCase")]
 pub struct Persona {
     /// The ID of the network this persona exists on.
+    #[serde(rename = "networkID")]
     pub network_id: NetworkID,
 
     /// The globally unique and identifiable Radix component address of this persona. Can be used as
