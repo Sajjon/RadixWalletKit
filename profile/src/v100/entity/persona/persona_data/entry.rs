@@ -30,21 +30,22 @@ impl BasePersonaDataEntry for Entry {
             Self::CompanyName(company) => Self::CompanyName(company.embed()),
             Self::CreditCard(credit_card) => Self::CreditCard(credit_card.embed()),
             Self::DateOfBirth(date_of_birth) => Self::DateOfBirth(date_of_birth.embed()),
-            Self::EmailAddress(email) => Self::EmailAddress(email.embed()),
-            Self::PhoneNumber(phone) => Self::PhoneNumber(phone.embed()),
-            Self::PostalAddress(postal) => Self::PostalAddress(postal.embed()),
+            Self::EmailAddress(email_address) => Self::EmailAddress(email_address.embed()),
+            Self::PhoneNumber(phone_number) => Self::PhoneNumber(phone_number.embed()),
+            Self::PostalAddress(postal_address) => Self::PostalAddress(postal_address.embed()),
             Self::Url(url) => Self::Url(url.embed()),
         }
     }
+
     fn description(&self) -> String {
         match self {
             Self::Name(name) => name.description(),
             Self::CompanyName(company) => company.description(),
             Self::CreditCard(credit_card) => credit_card.description(),
             Self::DateOfBirth(date_of_birth) => date_of_birth.description(),
-            Self::EmailAddress(email) => email.description(),
-            Self::PhoneNumber(phone) => phone.description(),
-            Self::PostalAddress(postal) => postal.description(),
+            Self::EmailAddress(email_address) => email_address.description(),
+            Self::PhoneNumber(phone_number) => phone_number.description(),
+            Self::PostalAddress(postal_address) => postal_address.description(),
             Self::Url(url) => url.description(),
         }
     }
