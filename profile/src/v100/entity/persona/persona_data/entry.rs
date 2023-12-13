@@ -6,7 +6,7 @@ use super::entry_kinds::{
 use serde::{Deserialize, Serialize};
 
 pub trait BasePersonaDataEntry {
-    fn embed(&self) -> Self;
+    fn embed(&self) -> Entry;
     fn description(&self) -> String;
 }
 
@@ -26,14 +26,14 @@ pub enum Entry {
 impl BasePersonaDataEntry for Entry {
     fn embed(&self) -> Self {
         match self {
-            Self::Name(name) => Self::Name(name.embed()),
-            Self::CompanyName(company) => Self::CompanyName(company.embed()),
-            Self::CreditCard(credit_card) => Self::CreditCard(credit_card.embed()),
-            Self::DateOfBirth(date_of_birth) => Self::DateOfBirth(date_of_birth.embed()),
-            Self::EmailAddress(email_address) => Self::EmailAddress(email_address.embed()),
-            Self::PhoneNumber(phone_number) => Self::PhoneNumber(phone_number.embed()),
-            Self::PostalAddress(postal_address) => Self::PostalAddress(postal_address.embed()),
-            Self::Url(url) => Self::Url(url.embed()),
+            Self::Name(name) => name.embed(),
+            Self::CompanyName(company) => company.embed(),
+            Self::CreditCard(credit_card) => credit_card.embed(),
+            Self::DateOfBirth(date_of_birth) => date_of_birth.embed(),
+            Self::EmailAddress(email_address) => email_address.embed(),
+            Self::PhoneNumber(phone_number) => phone_number.embed(),
+            Self::PostalAddress(postal_address) => postal_address.embed(),
+            Self::Url(url) => url.embed(),
         }
     }
 

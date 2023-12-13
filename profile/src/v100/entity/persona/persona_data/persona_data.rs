@@ -9,7 +9,6 @@ use super::{
     identified_entry::IdentifiedEntry,
 };
 
-//Need to implement https://github.com/radixdlt/babylon-wallet-ios/blob/main/RadixWallet/Profile/Entity/PersonaData/PersonaData.swift
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct PersonaData {

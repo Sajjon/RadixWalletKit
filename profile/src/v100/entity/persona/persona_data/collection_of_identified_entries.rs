@@ -1,11 +1,10 @@
+use super::identified_entry::IdentifiedEntry;
 use identified_vec::{Error, Identifiable, IdentifiedVec, IdentifiedVecOf};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Debug, Display},
     ops::Add,
 };
-
-use super::identified_entry::IdentifiedEntry;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct CollectionOfIdentifiedEntries<T>

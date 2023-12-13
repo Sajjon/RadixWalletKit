@@ -33,15 +33,6 @@ impl<T> IdentifiedEntry<T> {
     }
 }
 
-// impl<T: Identifiable> IdentifiedEntry<T> {
-//     pub fn placeholder_with_values(value: T) -> Self {
-//         Self {
-//             id: Uuid::from(T::id(&T)),
-//             value,
-//         }
-//     }
-// }
-
 #[cfg(test)]
 struct User {
     id: Uuid,
