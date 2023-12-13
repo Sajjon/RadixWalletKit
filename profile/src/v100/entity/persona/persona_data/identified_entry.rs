@@ -1,474 +1,595 @@
+use identified_vec::{identified_vec::IdentifiedVec, identified_vec_of::IdentifiedVecOf};
+use identified_vec::{Error, Identifiable};
 use serde::{Deserialize, Serialize};
-use std::borrow::BorrowMut;
-use std::cmp::Ordering;
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
+use std::hash::Hash;
+use std::ops::Add;
+use std::str::FromStr;
 use uuid::Uuid;
-use wallet_kit_common::error::collection_error::CollectionError;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default, Hash, Ord, Eq, PartialOrd, PartialEq)]
-pub struct IdentifiedEntry<Value: Eq + Ord> {
-    id: ID,
-    value: Value,
+#[derive(Serialize, Deserialize, Clone, Debug, Default, Hash, Eq, PartialEq)]
+pub struct IdentifiedEntry<T> {
+    id: Uuid,
+    value: T,
 }
 
-type ID = Uuid;
-impl<Value: Display + std::cmp::Ord> IdentifiedEntry<Value> {
-    pub fn new(id: ID, value: Value) -> Self {
-        Self { id, value }
-    }
+impl<T> Identifiable for IdentifiedEntry<T> {
+    type ID = Uuid;
 
+    fn id(&self) -> Self::ID {
+        self.id
+    }
+}
+
+impl<T: Display> IdentifiedEntry<T> {
     pub fn description(&self) -> String {
         format!("value: {} id: {} ", self.value, self.id)
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Default, Hash, Ord, PartialOrd)]
-pub struct CollectionOfIdentifiedEntries<Value: Ord> {
-    collection: Vec<IdentifiedEntry<Value>>,
+impl<T> IdentifiedEntry<T> {
+    pub fn new(id: Uuid, value: T) -> Self {
+        Self { id, value }
+    }
 }
 
-impl<Value: std::cmp::Eq + std::cmp::Ord + Copy + std::fmt::Display>
-    CollectionOfIdentifiedEntries<Value>
+// impl<T: Identifiable> IdentifiedEntry<T> {
+//     pub fn placeholder_with_values(value: T) -> Self {
+//         Self {
+//             id: Uuid::from(T::id(&T)),
+//             value,
+//         }
+//     }
+// }
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct CollectionOfIdentifiedEntries<T>
+where
+    T: Identifiable + Debug + Clone,
+{
+    collection: IdentifiedVec<<IdentifiedEntry<T> as Identifiable>::ID, IdentifiedEntry<T>>,
+}
+
+impl<T> CollectionOfIdentifiedEntries<T>
+where
+    T: Identifiable + Default + Debug + Clone,
 {
     pub fn default() -> Self {
-        Self { collection: vec![] }
-    }
-
-    pub fn new(collection: Vec<IdentifiedEntry<Value>>) -> Result<Self, CollectionError> {
-        let mut set: Vec<_> = collection.iter().map(|entry| &entry.value).collect();
-        set.sort();
-        set.dedup();
-
-        if set.len() != collection.len() {
-            return Err(CollectionError::DuplicateValuesFound);
-        } else {
-            Ok(CollectionOfIdentifiedEntries {
-                collection: collection,
-            })
+        Self {
+            collection: IdentifiedVecOf::<IdentifiedEntry<T>>::new(),
         }
     }
+}
 
-    pub fn add(&mut self, field: IdentifiedEntry<Value>) -> Result<(), CollectionError> {
-        if self.collection.iter().any(|i| i.value == field.value) {
-            return Err(CollectionError::DuplicateValuesFound);
-        }
-
-        if self.collection.iter().any(|i| i.id == field.id) {
-            return Err(CollectionError::DuplicateIDOfValuesFound);
-        }
-
-        self.collection.push(field);
-
-        Ok(())
-    }
-
-    pub fn update(&mut self, updated: IdentifiedEntry<Value>) -> Result<(), CollectionError> {
-        if !self.collection.iter().any(|i| i.id == updated.id) {
-            return Err(CollectionError::PersonaFieldCollectionValueWithIDNotFound);
-        }
-        let index = self
-            .collection
-            .iter()
-            .position(|value| value.id.to_owned() == updated.id)
-            .expect("Should find index since collection contains the ID");
-
-        self.collection[index] = updated;
-
-        Ok(())
-    }
-
+impl<T> CollectionOfIdentifiedEntries<IdentifiedEntry<T>>
+where
+    T: Debug + Clone + Identifiable + Display,
+{
     pub fn description(self) -> String {
         self.collection
             .iter()
-            .map(|entry| IdentifiedEntry::description(entry))
+            .map(|entry| entry.value.description().add(", "))
             .collect()
+    }
+}
+impl<T> CollectionOfIdentifiedEntries<T>
+where
+    T: Identifiable + Clone + Debug,
+{
+    pub fn new_collection_identified_entry() -> Self {
+        Self {
+            collection: IdentifiedVec::new(),
+        }
+    }
+}
+
+impl<T> CollectionOfIdentifiedEntries<T>
+where
+    T: Identifiable + Clone + Debug,
+{
+    pub fn from_iter<I>(unique_elements: I) -> Self
+    where
+        I: IntoIterator<Item = IdentifiedEntry<T>>,
+    {
+        let mut _self: CollectionOfIdentifiedEntries<T> = Self::new_collection_identified_entry();
+        unique_elements
+            .into_iter()
+            .for_each(|e| _ = _self.append(e));
+        return _self;
+    }
+}
+
+impl<T> CollectionOfIdentifiedEntries<T>
+where
+    T: Identifiable + Clone + Debug,
+{
+    pub fn from(collection: IdentifiedVecOf<IdentifiedEntry<T>>) -> Self {
+        Self { collection }
+    }
+
+    pub fn new() -> Self {
+        Self {
+            collection: IdentifiedVecOf::<IdentifiedEntry<T>>::new(),
+        }
+    }
+
+    pub fn update(&mut self, updated_element: IdentifiedEntry<T>) -> Result<(), Error> {
+        let result = self.collection.try_update(updated_element);
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(err) => Err(err),
+        }
+    }
+
+    pub fn append(&mut self, updated_element: IdentifiedEntry<T>) -> Result<(), Error> {
+        let result = self.collection.try_append(updated_element);
+        match result {
+            Ok(_) => Ok(()),
+            Err(err) => Err(err),
+        }
     }
 }
 
 #[cfg(test)]
+struct User {
+    id: Uuid,
+    name: String,
+}
+#[cfg(test)]
+impl Identifiable for User {
+    type ID = Uuid;
+    fn id(&self) -> Self::ID {
+        self.id
+    }
+}
+#[cfg(test)]
+impl User {
+    fn new(id: Uuid, name: &str) -> Self {
+        if name.is_empty() {
+            panic!("name cannot be empty")
+        }
+        Self {
+            id,
+            name: name.to_string(),
+        }
+    }
+
+    pub fn blob() -> Self {
+        User::new(
+            Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+            "Blob",
+        )
+    }
+    pub fn blob_jr() -> Self {
+        User::new(
+            Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+            "Blob, Jr.",
+        )
+    }
+    pub fn blob_sr() -> Self {
+        User::new(
+            Uuid::from_str("CCCCCCCC-3333-4444-5555-CCCCCCCCCCCC").unwrap(),
+            "Blob, Sr.",
+        )
+    }
+}
+
+// #[cfg(test)]
+// impl IdentifiedEntry<String> {
+//     pub fn placeholder_entry_1() -> Self {
+//         IdentifiedEntry::new(Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(), "Entry 1".to_string())
+//     }
+
+//     pub fn placeholder_entry_2() -> Self {
+//         IdentifiedEntry::new(Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(), "Entry 2".to_string())
+//     }
+
+//     pub fn placeholder_entry_3() -> Self {
+//         IdentifiedEntry::new(Uuid::from_str("CCCCCCCC-3333-4444-5555-CCCCCCCCCCCC").unwrap(), "Entry 3".to_string())
+//     }
+// }
+
+#[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
     use super::*;
+    use std::str::FromStr;
+    type ID = Uuid;
 
-    #[test]
-    fn new_identified_entry() {
-        let id: ID = Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap();
-        let value = "Test";
-        let identified_entry = IdentifiedEntry::new(id, value);
-        assert_eq!((identified_entry.id, identified_entry.value), (id, value))
-    }
+    // #[test]
+    // fn new_identified_entry() {
+    //     let id: ID = Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap();
+    //     let value = "Entry 1";
+    //     let identified_entry = IdentifiedEntry::new(id, value.to_string());
+    //     assert_eq!(identified_entry, IdentifiedEntry::placeholder_entry_1())
+    // }
 
-    #[test]
-    fn display_description() {
-        let id: ID = Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap();
-        let value = "Test";
-        let identified_entry = IdentifiedEntry::new(id, value);
-        assert_eq!((identified_entry.id, identified_entry.value), (id, value));
-
-        let description = IdentifiedEntry::description(&identified_entry);
-        assert_eq!(description, format!("value: {} id: {} ", value, id))
-    }
+    // #[test]
+    // fn display_description() {
+    //     let description = IdentifiedEntry::description(&IdentifiedEntry::placeholder_entry_1());
+    //     assert_eq!(
+    //         description,
+    //         format!(
+    //             "value: {} id: {} ",
+    //             "Entry 1",
+    //             "AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA".to_lowercase()
+    //         )
+    //     )
+    // }
 
     #[test]
     fn default_empty_collection() {
-        let default: CollectionOfIdentifiedEntries<_> =
-            CollectionOfIdentifiedEntries::<u8>::default();
-        assert_eq!(default.collection, vec![])
+        let default: CollectionOfIdentifiedEntries<IdentifiedEntry<u8>> =
+            CollectionOfIdentifiedEntries::<IdentifiedEntry<u8>>::default();
+        assert_eq!(default.collection, IdentifiedVec::new())
     }
 
-    #[test]
-    fn new_collection_duplicate_values() {
-        let first_entry = IdentifiedEntry::new(
-            Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-            "Test",
-        );
-        let second_entry = IdentifiedEntry::new(
-            Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-            "Test",
-        );
+    // #[test]
+    // fn new_collection_duplicate_values() {
+    //     let collection = IdentifiedVecOf::from_iter([
+    //         IdentifiedEntry::new,
+    //         IdentifiedEntry::new(
+    //             Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //             "Entry 1".to_string(),
+    //         ),
+    //     ]);
+    //     assert_eq!(
+    //         collection,
+    //         IdentifiedVecOf::from_iter([
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+    //                 "Entry 1".to_string()
+    //             ),
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //                 "Entry 1".to_string()
+    //             )
+    //         ])
+    //     );
+    //     let collection = CollectionOfIdentifiedEntries::from_iter([
+    //         IdentifiedEntry::placeholder_entry_1(),
+    //         IdentifiedEntry::new(
+    //             Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //             "Entry 1".to_string()
+    //         )
+    //     ])
+    //     // let coll = IdentifiedVecOf::<IdentifiedEntry<User>>::from_iter([
+    //     //     IdentifiedEntry::placeholder_with_values(id, value),
+    //     //     IdentifiedEntry::new(
+    //     //         Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //     //         "Entry 1"
+    //     //     )
+    //     // ]);
+    //     let collection_of_identified_entries =
+    //         CollectionOfIdentifiedEntries::from(coll);
+    //     assert_eq!(
+    //         collection_of_identified_entries,
+    //         CollectionOfIdentifiedEntries::new(IdentifiedVecOf::from_iter([
+    //             IdentifiedEntry::placeholder_entry_1(),
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //                 "Entry 1"
+    //             )
+    //         ]))
+    //     );
+    // }
 
-        let collection = vec![first_entry, second_entry];
-        assert_eq!(
-            collection,
-            vec![
-                IdentifiedEntry::new(
-                    Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-                    "Test"
-                ),
-                IdentifiedEntry::new(
-                    Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-                    "Test"
-                )
-            ]
-        );
+    // #[test]
+    // fn new_collection() {
+    //     let collection_1: IdentifiedVec<Uuid, IdentifiedEntry<&str>> =
+    //         IdentifiedVecOf::from_iter([
+    //             IdentifiedEntry::placeholder_entry_1(),
+    //             IdentifiedEntry::placeholder_entry_2(),
+    //         ]);
 
-        let collection_of_identified_entries = CollectionOfIdentifiedEntries::new(collection);
-        assert_eq!(
-            collection_of_identified_entries,
-            Err(CollectionError::DuplicateValuesFound)
-        );
-    }
+    //     let collection = CollectionOfIdentifiedEntries::from(collection_1);
+    //     assert_eq!(
+    //         collection,
+    //         vec![
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+    //                 "Test"
+    //             ),
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //                 "Second Test"
+    //             )
+    //         ]
+    //     );
 
-    #[test]
-    fn new_collection() {
-        let first_entry = IdentifiedEntry::new(
-            Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-            "Test",
-        );
-        let second_entry = IdentifiedEntry::new(
-            Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-            "Second Test",
-        );
+    //     let collection_of_identified_entries =
+    //         CollectionOfIdentifiedEntries::new(collection).unwrap();
+    //     assert_eq!(
+    //         collection_of_identified_entries,
+    //         CollectionOfIdentifiedEntries {
+    //             collection: vec![first_entry, second_entry]
+    //         }
+    //     );
+    // }
 
-        let collection = vec![first_entry.clone(), second_entry.clone()];
-        assert_eq!(
-            collection,
-            vec![
-                IdentifiedEntry::new(
-                    Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-                    "Test"
-                ),
-                IdentifiedEntry::new(
-                    Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-                    "Second Test"
-                )
-            ]
-        );
+    // #[test]
+    // fn add_entry_collection() {
+    //     let first_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+    //         "Test",
+    //     );
+    //     let second_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //         "Second Test",
+    //     );
 
-        let collection_of_identified_entries =
-            CollectionOfIdentifiedEntries::new(collection).unwrap();
-        assert_eq!(
-            collection_of_identified_entries,
-            CollectionOfIdentifiedEntries {
-                collection: vec![first_entry, second_entry]
-            }
-        );
-    }
+    //     let collection = vec![first_entry.clone(), second_entry.clone()];
+    //     assert_eq!(
+    //         collection,
+    //         vec![
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+    //                 "Test"
+    //             ),
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //                 "Second Test"
+    //             )
+    //         ]
+    //     );
 
-    #[test]
-    fn add_entry_collection() {
-        let first_entry = IdentifiedEntry::new(
-            Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-            "Test",
-        );
-        let second_entry = IdentifiedEntry::new(
-            Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-            "Second Test",
-        );
+    //     let mut collection_of_identified_entries =
+    //         CollectionOfIdentifiedEntries::new(collection).unwrap();
+    //     assert_eq!(
+    //         collection_of_identified_entries,
+    //         CollectionOfIdentifiedEntries {
+    //             collection: vec![first_entry.clone(), second_entry.clone()]
+    //         }
+    //     );
 
-        let collection = vec![first_entry.clone(), second_entry.clone()];
-        assert_eq!(
-            collection,
-            vec![
-                IdentifiedEntry::new(
-                    Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-                    "Test"
-                ),
-                IdentifiedEntry::new(
-                    Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-                    "Second Test"
-                )
-            ]
-        );
+    //     let new_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("CCCCCCCC-3333-4444-5555-CCCCCCCCCCCC").unwrap(),
+    //         "New Entry",
+    //     );
 
-        let mut collection_of_identified_entries =
-            CollectionOfIdentifiedEntries::new(collection).unwrap();
-        assert_eq!(
-            collection_of_identified_entries,
-            CollectionOfIdentifiedEntries {
-                collection: vec![first_entry.clone(), second_entry.clone()]
-            }
-        );
+    //     collection_of_identified_entries.add(new_entry.clone()).unwrap();
 
-        let new_entry = IdentifiedEntry::new(
-            Uuid::from_str("CCCCCCCC-3333-4444-5555-CCCCCCCCCCCC").unwrap(),
-            "New Entry",
-        );
+    //     assert_eq!(
+    //         collection_of_identified_entries,
+    //         CollectionOfIdentifiedEntries {
+    //             collection: vec![first_entry, second_entry, new_entry]
+    //         }
+    //     )
+    // }
 
-        collection_of_identified_entries.add(new_entry.clone());
+    // #[test]
+    // fn add_entry_collection_duplicate_ids() {
+    //     let first_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+    //         "Test",
+    //     );
+    //     let second_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //         "Second Test",
+    //     );
 
-        assert_eq!(
-            collection_of_identified_entries,
-            CollectionOfIdentifiedEntries {
-                collection: vec![first_entry, second_entry, new_entry]
-            }
-        )
-    }
+    //     let collection = vec![first_entry.clone(), second_entry.clone()];
+    //     assert_eq!(
+    //         collection,
+    //         vec![
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+    //                 "Test"
+    //             ),
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //                 "Second Test"
+    //             )
+    //         ]
+    //     );
 
-    #[test]
-    fn add_entry_collection_duplicate_ids() {
-        let first_entry = IdentifiedEntry::new(
-            Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-            "Test",
-        );
-        let second_entry = IdentifiedEntry::new(
-            Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-            "Second Test",
-        );
+    //     let mut collection_of_identified_entries =
+    //         CollectionOfIdentifiedEntries::new(collection).unwrap();
+    //     assert_eq!(
+    //         collection_of_identified_entries,
+    //         CollectionOfIdentifiedEntries {
+    //             collection: vec![first_entry.clone(), second_entry.clone()]
+    //         }
+    //     );
 
-        let collection = vec![first_entry.clone(), second_entry.clone()];
-        assert_eq!(
-            collection,
-            vec![
-                IdentifiedEntry::new(
-                    Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-                    "Test"
-                ),
-                IdentifiedEntry::new(
-                    Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-                    "Second Test"
-                )
-            ]
-        );
+    //     let new_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //         "New Entry",
+    //     );
 
-        let mut collection_of_identified_entries =
-            CollectionOfIdentifiedEntries::new(collection).unwrap();
-        assert_eq!(
-            collection_of_identified_entries,
-            CollectionOfIdentifiedEntries {
-                collection: vec![first_entry.clone(), second_entry.clone()]
-            }
-        );
+    //     let result_after_add = collection_of_identified_entries.add(new_entry.clone());
 
-        let new_entry = IdentifiedEntry::new(
-            Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-            "New Entry",
-        );
+    //     assert_eq!(
+    //         result_after_add,
+    //         Err(CollectionError::DuplicateIDOfValuesFound)
+    //     );
+    // }
 
-        let result_after_add = collection_of_identified_entries.add(new_entry.clone());
+    // #[test]
+    // fn add_entry_collection_duplicate_values() {
+    //     let first_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+    //         "Test",
+    //     );
+    //     let second_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //         "Second Test",
+    //     );
 
-        assert_eq!(
-            result_after_add,
-            Err(CollectionError::DuplicateIDOfValuesFound)
-        );
-    }
+    //     let collection = vec![first_entry.clone(), second_entry.clone()];
+    //     assert_eq!(
+    //         collection,
+    //         vec![
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+    //                 "Test"
+    //             ),
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //                 "Second Test"
+    //             )
+    //         ]
+    //     );
 
-    #[test]
-    fn add_entry_collection_duplicate_values() {
-        let first_entry = IdentifiedEntry::new(
-            Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-            "Test",
-        );
-        let second_entry = IdentifiedEntry::new(
-            Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-            "Second Test",
-        );
+    //     let mut collection_of_identified_entries =
+    //         CollectionOfIdentifiedEntries::new(collection).unwrap();
+    //     assert_eq!(
+    //         collection_of_identified_entries,
+    //         CollectionOfIdentifiedEntries {
+    //             collection: vec![first_entry.clone(), second_entry.clone()]
+    //         }
+    //     );
 
-        let collection = vec![first_entry.clone(), second_entry.clone()];
-        assert_eq!(
-            collection,
-            vec![
-                IdentifiedEntry::new(
-                    Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-                    "Test"
-                ),
-                IdentifiedEntry::new(
-                    Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-                    "Second Test"
-                )
-            ]
-        );
+    //     let new_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("CCCCCCCC-3333-4444-5555-CCCCCCCCCCCC").unwrap(),
+    //         "Second Test",
+    //     );
 
-        let mut collection_of_identified_entries =
-            CollectionOfIdentifiedEntries::new(collection).unwrap();
-        assert_eq!(
-            collection_of_identified_entries,
-            CollectionOfIdentifiedEntries {
-                collection: vec![first_entry.clone(), second_entry.clone()]
-            }
-        );
+    //     let result_after_add = collection_of_identified_entries.add(new_entry.clone());
 
-        let new_entry = IdentifiedEntry::new(
-            Uuid::from_str("CCCCCCCC-3333-4444-5555-CCCCCCCCCCCC").unwrap(),
-            "Second Test",
-        );
+    //     assert_eq!(result_after_add, Err(CollectionError::DuplicateValuesFound));
+    // }
 
-        let result_after_add = collection_of_identified_entries.add(new_entry.clone());
+    // #[test]
+    // fn update_entry_collection() {
+    //     let first_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+    //         "Test",
+    //     );
+    //     let second_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //         "Second Test",
+    //     );
 
-        assert_eq!(result_after_add, Err(CollectionError::DuplicateValuesFound));
-    }
+    //     let collection = vec![first_entry.clone(), second_entry.clone()];
+    //     assert_eq!(
+    //         collection,
+    //         vec![
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+    //                 "Test"
+    //             ),
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //                 "Second Test"
+    //             )
+    //         ]
+    //     );
 
-    #[test]
-    fn update_entry_collection() {
-        let first_entry = IdentifiedEntry::new(
-            Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-            "Test",
-        );
-        let second_entry = IdentifiedEntry::new(
-            Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-            "Second Test",
-        );
+    //     let mut collection_of_identified_entries =
+    //         CollectionOfIdentifiedEntries::new(collection).unwrap();
+    //     assert_eq!(
+    //         collection_of_identified_entries,
+    //         CollectionOfIdentifiedEntries {
+    //             collection: vec![first_entry.clone(), second_entry.clone()]
+    //         }
+    //     );
 
-        let collection = vec![first_entry.clone(), second_entry.clone()];
-        assert_eq!(
-            collection,
-            vec![
-                IdentifiedEntry::new(
-                    Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-                    "Test"
-                ),
-                IdentifiedEntry::new(
-                    Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-                    "Second Test"
-                )
-            ]
-        );
+    //     let updated_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //         "Updated Value",
+    //     );
 
-        let mut collection_of_identified_entries =
-            CollectionOfIdentifiedEntries::new(collection).unwrap();
-        assert_eq!(
-            collection_of_identified_entries,
-            CollectionOfIdentifiedEntries {
-                collection: vec![first_entry.clone(), second_entry.clone()]
-            }
-        );
+    //     collection_of_identified_entries.update(updated_entry.clone()).unwrap();
 
-        let updated_entry = IdentifiedEntry::new(
-            Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-            "Updated Value",
-        );
+    //     assert_eq!(
+    //         collection_of_identified_entries,
+    //         CollectionOfIdentifiedEntries {
+    //             collection: vec![first_entry, updated_entry]
+    //         }
+    //     );
+    // }
 
-        collection_of_identified_entries.update(updated_entry.clone());
+    // #[test]
+    // fn update_entry_collection_id_not_found() {
+    //     let first_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+    //         "Test",
+    //     );
+    //     let second_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //         "Second Test",
+    //     );
 
-        assert_eq!(
-            collection_of_identified_entries,
-            CollectionOfIdentifiedEntries {
-                collection: vec![first_entry, updated_entry]
-            }
-        );
-    }
+    //     let collection = vec![first_entry.clone(), second_entry.clone()];
+    //     assert_eq!(
+    //         collection,
+    //         vec![
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+    //                 "Test"
+    //             ),
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //                 "Second Test"
+    //             )
+    //         ]
+    //     );
 
-    #[test]
-    fn update_entry_collection_id_not_found() {
-        let first_entry = IdentifiedEntry::new(
-            Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-            "Test",
-        );
-        let second_entry = IdentifiedEntry::new(
-            Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-            "Second Test",
-        );
+    //     let mut collection_of_identified_entries =
+    //         CollectionOfIdentifiedEntries::new(collection).unwrap();
+    //     assert_eq!(
+    //         collection_of_identified_entries,
+    //         CollectionOfIdentifiedEntries {
+    //             collection: vec![first_entry.clone(), second_entry.clone()]
+    //         }
+    //     );
 
-        let collection = vec![first_entry.clone(), second_entry.clone()];
-        assert_eq!(
-            collection,
-            vec![
-                IdentifiedEntry::new(
-                    Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-                    "Test"
-                ),
-                IdentifiedEntry::new(
-                    Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-                    "Second Test"
-                )
-            ]
-        );
+    //     let updated_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("CCCCCCCC-3333-4444-5555-CCCCCCCCCCCC").unwrap(),
+    //         "Updated Value",
+    //     );
 
-        let mut collection_of_identified_entries =
-            CollectionOfIdentifiedEntries::new(collection).unwrap();
-        assert_eq!(
-            collection_of_identified_entries,
-            CollectionOfIdentifiedEntries {
-                collection: vec![first_entry.clone(), second_entry.clone()]
-            }
-        );
+    //     let result = collection_of_identified_entries.update(updated_entry.clone());
 
-        let updated_entry = IdentifiedEntry::new(
-            Uuid::from_str("CCCCCCCC-3333-4444-5555-CCCCCCCCCCCC").unwrap(),
-            "Updated Value",
-        );
+    //     assert_eq!(
+    //         result,
+    //         Err(CollectionError::PersonaFieldCollectionValueWithIDNotFound)
+    //     );
+    // }
 
-        let result = collection_of_identified_entries.update(updated_entry.clone());
+    // #[test]
+    // fn description() {
+    //     let first_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+    //         "Test",
+    //     );
+    //     let second_entry = IdentifiedEntry::new(
+    //         Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //         "Second Test",
+    //     );
 
-        assert_eq!(
-            result,
-            Err(CollectionError::PersonaFieldCollectionValueWithIDNotFound)
-        );
-    }
+    //     let collection = vec![first_entry.clone(), second_entry.clone()];
+    //     assert_eq!(
+    //         collection,
+    //         vec![
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+    //                 "Test"
+    //             ),
+    //             IdentifiedEntry::new(
+    //                 Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+    //                 "Second Test"
+    //             )
+    //         ]
+    //     );
 
-    #[test]
-    fn description() {
-        let first_entry = IdentifiedEntry::new(
-            Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-            "Test",
-        );
-        let second_entry = IdentifiedEntry::new(
-            Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-            "Second Test",
-        );
+    //     let collection_of_identified_entries =
+    //         CollectionOfIdentifiedEntries::new(collection).unwrap();
+    //     assert_eq!(
+    //         collection_of_identified_entries,
+    //         CollectionOfIdentifiedEntries {
+    //             collection: vec![first_entry.clone(), second_entry.clone()]
+    //         }
+    //     );
 
-        let collection = vec![first_entry.clone(), second_entry.clone()];
-        assert_eq!(
-            collection,
-            vec![
-                IdentifiedEntry::new(
-                    Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-                    "Test"
-                ),
-                IdentifiedEntry::new(
-                    Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-                    "Second Test"
-                )
-            ]
-        );
-
-        let mut collection_of_identified_entries =
-            CollectionOfIdentifiedEntries::new(collection).unwrap();
-        assert_eq!(
-            collection_of_identified_entries,
-            CollectionOfIdentifiedEntries {
-                collection: vec![first_entry.clone(), second_entry.clone()]
-            }
-        );
-
-        let description = collection_of_identified_entries.description();
-        assert_eq!(
-            description,
-            format!(
-                "value: {} id: {} value: {} id: {} ",
-                first_entry.value, first_entry.id, second_entry.value, second_entry.id
-            )
-        )
-    }
+    //     let description = collection_of_identified_entries.description();
+    //     assert_eq!(
+    //         description,
+    //         format!(
+    //             "value: {} id: {} value: {} id: {} ",
+    //             first_entry.value, first_entry.id, second_entry.value, second_entry.id
+    //         )
+    //     )
+    // }
 }

@@ -1,27 +1,31 @@
 use serde::{Deserialize, Serialize};
 
+use super::{
+    entry_kinds::{
+        associated_url::AssociatedURL, company_name::CompanyName, credit_card::CreditCard,
+        date_of_birth::DateOfBirth, email_address::EmailAddress, name::Name,
+        phone_number::PhoneNumber, postal_address::PostalAddress,
+    },
+    identified_entry::IdentifiedEntry,
+};
+
 //Need to implement https://github.com/radixdlt/babylon-wallet-ios/blob/main/RadixWallet/Profile/Entity/PersonaData/PersonaData.swift
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct PersonaData {
-    name: String,
+    name: IdentifiedEntry<Name>,
 
-    #[serde(rename = "dateOfBirth")]
-    date_of_birth: String,
+    date_of_birth: IdentifiedEntry<DateOfBirth>,
 
-    #[serde(rename = "companyName")]
-    company_name: String,
+    company_name: IdentifiedEntry<CompanyName>,
 
-    #[serde(rename = "emailAddresses")]
-    email_addresses: String,
+    email_addresses: IdentifiedEntry<EmailAddress>,
 
-    #[serde(rename = "phoneNumbers")]
-    phone_numbers: String,
+    phone_numbers: IdentifiedEntry<PhoneNumber>,
 
-    urls: String,
+    urls: IdentifiedEntry<AssociatedURL>,
 
-    #[serde(rename = "postalAddresses")]
-    postal_addresses: String,
+    postal_addresses: IdentifiedEntry<PostalAddress>,
 
-    #[serde(rename = "creditCards")]
-    credit_cards: String,
+    credit_cards: IdentifiedEntry<CreditCard>,
 }
