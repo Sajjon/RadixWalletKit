@@ -8,7 +8,7 @@ pub struct CompanyName {
 
 impl BasePersonaDataEntry for CompanyName {
     fn embed(&self) -> Entry {
-        self.embed()
+        todo!()
     }
 
     fn description(&self) -> String {

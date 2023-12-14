@@ -1,3 +1,5 @@
+use std::default;
+
 use super::entry_kinds::{
     associated_url::AssociatedURL, company_name::CompanyName, credit_card::CreditCard,
     date_of_birth::DateOfBirth, email_address::EmailAddress, name::Name, phone_number::PhoneNumber,
@@ -10,7 +12,7 @@ pub trait BasePersonaDataEntry {
     fn description(&self) -> String;
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum Entry {
     Name(Name),
     DateOfBirth(DateOfBirth),

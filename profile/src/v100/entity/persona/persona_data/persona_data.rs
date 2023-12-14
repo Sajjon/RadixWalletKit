@@ -9,22 +9,22 @@ use super::{
     identified_entry::IdentifiedEntry,
 };
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct PersonaData {
-    name: IdentifiedEntry<Name>,
+    name: IdentifiedEntry,
 
-    date_of_birth: IdentifiedEntry<DateOfBirth>,
+    date_of_birth: IdentifiedEntry,
 
-    company_name: IdentifiedEntry<CompanyName>,
+    company_name: IdentifiedEntry,
 
-    email_addresses: IdentifiedEntry<EmailAddress>,
+    email_addresses: IdentifiedEntry,
 
-    phone_numbers: IdentifiedEntry<PhoneNumber>,
+    phone_numbers: IdentifiedEntry,
 
-    urls: IdentifiedEntry<AssociatedURL>,
+    urls: IdentifiedEntry,
 
-    postal_addresses: IdentifiedEntry<PostalAddress>,
+    postal_addresses: IdentifiedEntry,
 
-    credit_cards: IdentifiedEntry<CreditCard>,
+    credit_cards: IdentifiedEntry,
 }
