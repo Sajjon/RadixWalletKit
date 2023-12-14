@@ -6,7 +6,7 @@ pub struct DateOfBirth {}
 
 impl BasePersonaDataEntry for DateOfBirth {
     fn embed(&self) -> Entry {
-        self.embed()
+        todo!()
     }
 
     fn description(&self) -> String {

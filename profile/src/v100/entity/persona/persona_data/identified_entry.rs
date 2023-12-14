@@ -7,75 +7,101 @@ use std::ops::Add;
 use std::str::FromStr;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default, Hash, Eq, PartialEq)]
-pub struct IdentifiedEntry<T> {
-    id: Uuid,
-    pub value: T,
+use super::entry::{self, BasePersonaDataEntry, Entry};
+use super::entry_kinds::name::Name;
+
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct Value(Entry);
+
+impl BasePersonaDataEntry for Value {
+    fn embed(&self) -> Entry {
+        self.0.embed()
+    }
+
+    fn description(&self) -> String {
+        self.0.description()
+    }
 }
 
-impl<T> Identifiable for IdentifiedEntry<T> {
-    type ID = Uuid;
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct IdentifiedEntry {
+    id: Uuid,
+    pub value: Value,
+}
 
+impl Identifiable for IdentifiedEntry {
+    type ID = Uuid;
     fn id(&self) -> Self::ID {
         self.id
     }
 }
 
-impl<T: Display> IdentifiedEntry<T> {
-    pub fn description(&self) -> String {
-        format!("value: {} id: {} ", self.value, self.id)
+impl IdentifiedEntry {
+    pub fn new() -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            value: Value(Entry::Name(Name {})),
+        }
     }
-}
 
-impl<T> IdentifiedEntry<T> {
-    pub fn new(id: Uuid, value: T) -> Self {
+    pub fn from(id: Uuid, value: Value) -> Self {
         Self { id, value }
     }
 }
 
-#[cfg(test)]
-struct User {
-    id: Uuid,
-    name: String,
-}
-#[cfg(test)]
-impl Identifiable for User {
-    type ID = Uuid;
-    fn id(&self) -> Self::ID {
-        self.id
-    }
-}
-#[cfg(test)]
-impl User {
-    fn new(id: Uuid, name: &str) -> Self {
-        if name.is_empty() {
-            panic!("name cannot be empty")
-        }
-        Self {
-            id,
-            name: name.to_string(),
-        }
+impl BasePersonaDataEntry for IdentifiedEntry {
+    fn embed(&self) -> Entry {
+        Entry::embed(&self.value.0)
     }
 
-    pub fn blob() -> Self {
-        User::new(
-            Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
-            "Blob",
-        )
-    }
-    pub fn blob_jr() -> Self {
-        User::new(
-            Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
-            "Blob, Jr.",
-        )
-    }
-    pub fn blob_sr() -> Self {
-        User::new(
-            Uuid::from_str("CCCCCCCC-3333-4444-5555-CCCCCCCCCCCC").unwrap(),
-            "Blob, Sr.",
-        )
+    fn description(&self) -> String {
+        format!("value: {:#?} id: {:#?} ", self.value, self.id)
     }
 }
+
+// #[cfg(test)]
+// struct User {
+//     id: Uuid,
+//     name: String,
+// }
+// #[cfg(test)]
+// impl Identifiable for User {
+//     type ID = Uuid;
+//     fn id(&self) -> Self::ID {
+//         self.id
+//     }
+// }
+// #[cfg(test)]
+// impl User {
+//     fn new(id: Uuid, name: &str) -> Self {
+//         if name.is_empty() {
+//             panic!("name cannot be empty")
+//         }
+//         Self {
+//             id,
+//             name: name.to_string(),
+//         }
+//     }
+
+//     pub fn blob() -> Self {
+//         User::new(
+//             Uuid::from_str("AAAAAAAA-9999-8888-7777-AAAAAAAAAAAA").unwrap(),
+//             "Blob",
+//         )
+//     }
+//     pub fn blob_jr() -> Self {
+//         User::new(
+//             Uuid::from_str("BBBBBBBB-0000-1111-2222-BBBBBBBBBBBB").unwrap(),
+//             "Blob, Jr.",
+//         )
+//     }
+//     pub fn blob_sr() -> Self {
+//         User::new(
+//             Uuid::from_str("CCCCCCCC-3333-4444-5555-CCCCCCCCCCCC").unwrap(),
+//             "Blob, Sr.",
+//         )
+//     }
+// }
 
 // #[cfg(test)]
 // impl IdentifiedEntry<String> {

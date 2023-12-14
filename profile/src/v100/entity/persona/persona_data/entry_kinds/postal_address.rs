@@ -6,7 +6,7 @@ pub struct PostalAddress {}
 
 impl BasePersonaDataEntry for PostalAddress {
     fn embed(&self) -> Entry {
-        self.embed()
+        todo!()
     }
 
     fn description(&self) -> String {

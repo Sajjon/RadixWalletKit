@@ -6,7 +6,7 @@ pub struct AssociatedURL {}
 
 impl BasePersonaDataEntry for AssociatedURL {
     fn embed(&self) -> Entry {
-        self.embed()
+        todo!()
     }
 
     fn description(&self) -> String {

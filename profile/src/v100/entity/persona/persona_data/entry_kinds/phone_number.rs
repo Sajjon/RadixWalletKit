@@ -6,7 +6,7 @@ pub struct PhoneNumber {}
 
 impl BasePersonaDataEntry for PhoneNumber {
     fn embed(&self) -> Entry {
-        self.embed()
+        todo!()
     }
 
     fn description(&self) -> String {

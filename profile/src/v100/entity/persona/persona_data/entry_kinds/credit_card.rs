@@ -6,7 +6,7 @@ pub struct CreditCard {}
 
 impl BasePersonaDataEntry for CreditCard {
     fn embed(&self) -> Entry {
-        self.embed()
+        todo!()
     }
 
     fn description(&self) -> String {

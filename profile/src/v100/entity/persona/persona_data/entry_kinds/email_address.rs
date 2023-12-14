@@ -6,7 +6,7 @@ pub struct EmailAddress {}
 
 impl BasePersonaDataEntry for EmailAddress {
     fn embed(&self) -> Entry {
-        self.embed()
+        todo!()
     }
 
     fn description(&self) -> String {
