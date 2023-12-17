@@ -10,37 +10,37 @@ use uuid::Uuid;
 use super::entry::{self, BasePersonaDataEntry, Entry};
 use super::entry_kinds::name::Name;
 
+// #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+// pub struct Value(Entry);
+
+// impl BasePersonaDataEntry for Value {
+//     fn embed(&self) -> Entry {
+//         self.0.embed()
+//     }
+
+//     fn description(&self) -> String {
+//         self.0.description()
+//     }
+// }
+
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct Value(Entry);
-
-impl BasePersonaDataEntry for Value {
-    fn embed(&self) -> Entry {
-        self.0.embed()
-    }
-
-    fn description(&self) -> String {
-        self.0.description()
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct IdentifiedEntry {
+pub struct IdentifiedEntry<Value> {
     id: Uuid,
     pub value: Value,
 }
 
-impl Identifiable for IdentifiedEntry {
+impl<Value> Identifiable for IdentifiedEntry<Value> {
     type ID = Uuid;
     fn id(&self) -> Self::ID {
         self.id
     }
 }
 
-impl IdentifiedEntry {
+impl<Value: Default> IdentifiedEntry<Value> {
     pub fn new() -> Self {
         Self {
             id: Uuid::new_v4(),
-            value: Value(Entry::Name(Name {})),
+            value: Value::default(),
         }
     }
 
@@ -49,17 +49,16 @@ impl IdentifiedEntry {
     }
 }
 
-impl BasePersonaDataEntry for IdentifiedEntry {
-    fn embed(&self) -> Entry {
-        Entry::embed(&self.value.0)
-    }
+// impl<Value> BasePersonaDataEntry for IdentifiedEntry {
+//     fn embed(&self) -> Entry {
+//         Entry::embed(&self.value.0)
+//     }
 
-    fn description(&self) -> String {
-        format!("value: {:#?} id: {:#?} ", self.value, self.id)
-    }
-}
+//     fn description(&self) -> String {
+//         format!("value: {:#?} id: {:#?} ", self.value, self.id)
+//     }
+// }
 
-// #[cfg(test)]
 // struct User {
 //     id: Uuid,
 //     name: String,

@@ -2,14 +2,12 @@ use crate::v100::entity::persona::persona_data::entry::{BasePersonaDataEntry, En
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Default)]
-pub struct PhoneNumber {}
+pub struct PhoneNumber {
+    number: String,
+}
 
 impl BasePersonaDataEntry for PhoneNumber {
-    fn embed(&self) -> Entry {
-        todo!()
-    }
-
     fn description(&self) -> String {
-        todo!()
+        self.number.clone()
     }
 }
