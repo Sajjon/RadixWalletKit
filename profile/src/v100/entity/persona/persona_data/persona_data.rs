@@ -1,30 +1,21 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    entry_kinds::{
-        associated_url::AssociatedURL, company_name::CompanyName, credit_card::CreditCard,
-        date_of_birth::DateOfBirth, email_address::EmailAddress, name::Name,
-        phone_number::PhoneNumber, postal_address::PostalAddress,
-    },
+    collection_of_identified_entries::CollectionOfIdentifiedEntries,
+    // collection_of_identified_entries::CollectionOfIdentifiedEntries,
+    entry_kinds::{email_address::EmailAddress, name::Name},
     identified_entry::IdentifiedEntry,
 };
+
+type IdentifiedName = IdentifiedEntry<Name>;
+// type IdentifiedEmailAddresses = CollectionOfIdentifiedEntries ;
+// type IdentifiedPhoneNumbers = CollectionOfIdentifiedEntries;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct PersonaData {
-    name: IdentifiedEntry,
+    name: Option<IdentifiedName>,
+    //     email_addresses: IdentifiedEmailAddresses,
 
-    date_of_birth: IdentifiedEntry,
-
-    company_name: IdentifiedEntry,
-
-    email_addresses: IdentifiedEntry,
-
-    phone_numbers: IdentifiedEntry,
-
-    urls: IdentifiedEntry,
-
-    postal_addresses: IdentifiedEntry,
-
-    credit_cards: IdentifiedEntry,
+    //     phone_numbers: Option<IdentifiedPhoneNumbers>,
 }
