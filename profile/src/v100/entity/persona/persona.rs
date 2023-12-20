@@ -11,11 +11,11 @@ use wallet_kit_common::network_id::NetworkID;
 /// factors used to control it. The identity is either `virtual` or not. By "virtual"
 /// we mean that the Radix Public Ledger does not yet know of the public address
 /// of this identity.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
+#[derive(Clone, Debug, PartialEq, Eq)]
+// #[serde(rename_all = "camelCase")]
 pub struct Persona {
     /// The ID of the network this persona exists on.
-    #[serde(rename = "networkID")]
+    // #[serde(rename = "networkID")]
     pub network_id: NetworkID,
 
     /// The globally unique and identifiable Radix component address of this persona. Can be used as

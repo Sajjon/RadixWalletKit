@@ -28,7 +28,7 @@ nutype = { version = "0.4.0", features = ["serde"] }
 transaction = { git = "https://github.com/radixdlt/radixdlt-scrypto", rev = "038ddee8b0f57aa90e36375c69946c4eb634efeb", features = [
     "serde",
 ] }
-identified_vec = { version = "0.1.8" , features = [
+identified_vec = { git = "https://github.com/Vinnstah/identified_vec.git" , rev = "d6584d556d17441dafd88cd81e2073614aafeff1", features = [
     "serde",
 ] }
 enum-as-inner = "0.6.0"
