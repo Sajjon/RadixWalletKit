@@ -24,27 +24,27 @@ use super::entry_kinds::name::Name;
 // }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct IdentifiedEntry<Value> {
+pub struct IdentifiedEntry<T> {
     id: Uuid,
-    pub value: Value,
+    pub value: T,
 }
 
-impl<Value> Identifiable for IdentifiedEntry<Value> {
+impl<T> Identifiable for IdentifiedEntry<T> {
     type ID = Uuid;
     fn id(&self) -> Self::ID {
         self.id
     }
 }
 
-impl<Value: Default> IdentifiedEntry<Value> {
+impl<T: Default> IdentifiedEntry<T> {
     pub fn new() -> Self {
         Self {
             id: Uuid::new_v4(),
-            value: Value::default(),
+            value: T::default(),
         }
     }
 
-    pub fn from(id: Uuid, value: Value) -> Self {
+    pub fn from(id: Uuid, value: T) -> Self {
         Self { id, value }
     }
 }

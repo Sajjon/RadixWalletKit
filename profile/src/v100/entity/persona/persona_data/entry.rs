@@ -1,5 +1,3 @@
-use std::default;
-
 use super::entry_kinds::{email_address::EmailAddress, name::Name, phone_number::PhoneNumber};
 use serde::{Deserialize, Serialize};
 
