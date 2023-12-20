@@ -25,7 +25,7 @@ use super::entry_kinds::name::Name;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct IdentifiedEntry<T> {
-    id: Uuid,
+    pub id: Uuid,
     pub value: T,
 }
 
