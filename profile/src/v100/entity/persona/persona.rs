@@ -37,6 +37,7 @@ pub struct Persona {
     persona_data: PersonaData,
 }
 
+#[cfg(any(test, feature = "placeholder"))]
 impl Persona {
     pub fn new(
         address: IdentityAddress,
