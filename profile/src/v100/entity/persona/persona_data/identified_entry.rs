@@ -1,9 +1,9 @@
-use identified_vec::{Error, Identifiable};
+use identified_vec::Identifiable;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Debug, Display};
-use std::hash::Hash;
-use std::ops::Add;
-use std::str::FromStr;
+use std::{
+    fmt::{Debug, Display},
+    str::FromStr,
+};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
