@@ -6,7 +6,6 @@ use super::{
 use crate::identified_vec_via::IdentifiedVecVia;
 use identified_vec::{IsIdentifiableVecOfVia, IsIdentifiedVecOf};
 use serde::{Deserialize, Serialize};
-use url::form_urlencoded::Target;
 
 type IdentifiedName = IdentifiedEntry<Name>;
 type IdentifiedEmailAddresses = IdentifiedVecVia<IdentifiedEntry<EmailAddress>>;
