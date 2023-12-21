@@ -1,11 +1,11 @@
-use crate::v100::address::identity_address::IdentityAddress;
+use crate::v100::address::IdentityAddress;
 use crate::v100::entity::display_name::DisplayName;
 use crate::v100::entity::entity_flags::EntityFlags;
 use crate::v100::entity::persona::persona_data::persona_data::PersonaData;
-use crate::v100::entity_security_state::entity_security_state::EntitySecurityState;
+use crate::v100::entity_security_state::EntitySecurityState;
 use radix_engine_common::prelude::RefCell;
 use serde::{Deserialize, Serialize};
-use wallet_kit_common::network_id::NetworkID;
+use wallet_kit_common::{HasPlaceholder, NetworkID};
 
 /// A network unique identity with a unique public address and a set of cryptographic
 /// factors used to control it. The identity is either `virtual` or not. By "virtual"
@@ -45,7 +45,7 @@ impl Persona {
         persona_data: PersonaData,
     ) -> Self {
         Self {
-            network_id: address.network_id,
+            network_id: *address.network_id(),
             address,
             security_state: EntitySecurityState::placeholder(),
             display_name: RefCell::new(display_name),
