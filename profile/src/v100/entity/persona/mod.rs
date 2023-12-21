@@ -1,2 +1,5 @@
-pub mod persona;
-pub mod persona_data;
+mod persona;
+mod persona_data;
+
+pub use persona::*;
+pub use persona_data::*;

@@ -1,4 +1,9 @@
-pub mod entry;
-pub mod entry_kinds;
-pub mod identified_entry;
-pub mod persona_data;
+mod entry;
+mod entry_kinds;
+mod identified_entry;
+mod persona_data;
+
+pub use entry::*;
+pub use entry_kinds::*;
+pub use identified_entry::*;
+pub use persona_data::*;

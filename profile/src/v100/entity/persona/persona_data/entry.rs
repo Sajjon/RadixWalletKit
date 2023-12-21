@@ -1,4 +1,4 @@
-use super::entry_kinds::{email_address::EmailAddress, name::Name, phone_number::PhoneNumber};
+use super::entry_kinds::{EmailAddress, Name, PhoneNumber};
 use serde::{Deserialize, Serialize};
 
 pub trait BasePersonaDataEntry {

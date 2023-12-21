@@ -1,3 +1,4 @@
+use derive_getters::Getters;
 use identified_vec::Identifiable;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -6,10 +7,10 @@ use std::{
 };
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Getters)]
 pub struct IdentifiedEntry<T> {
-    pub id: Uuid,
-    pub value: T,
+    id: Uuid,
+    value: T,
 }
 
 impl<T> Identifiable for IdentifiedEntry<T> {
@@ -75,7 +76,7 @@ impl IdentifiedEntry<String> {
 
 #[cfg(test)]
 mod tests {
-    use crate::v100::entity::persona::persona_data::entry_kinds::email_address::EmailAddress;
+    use crate::v100::entity::persona::persona_data::entry_kinds::EmailAddress;
 
     use super::*;
     use std::str::FromStr;

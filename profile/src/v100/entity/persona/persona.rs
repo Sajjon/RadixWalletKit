@@ -1,7 +1,7 @@
 use crate::v100::address::IdentityAddress;
 use crate::v100::entity::display_name::DisplayName;
 use crate::v100::entity::entity_flags::EntityFlags;
-use crate::v100::entity::persona::persona_data::persona_data::PersonaData;
+use crate::v100::entity::persona::persona_data::PersonaData;
 use crate::v100::entity_security_state::EntitySecurityState;
 use radix_engine_common::prelude::RefCell;
 use serde::{Deserialize, Serialize};
