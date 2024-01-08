@@ -1,4 +1,4 @@
-use profile::{v100::Profile, ProfileSnapshotVersion};
+use profile::{Profile, ProfileSnapshotVersion};
 use std::{
     env,
     ffi::{OsStr, OsString},
@@ -44,9 +44,9 @@ where
             serde_json::Value::from_str(j.as_str())
                 .map_err(|_| TestingError::FailedDoesNotContainValidJSON(j))
         })
-        .and_then(|v| {
-            serde_json::from_value::<T>(v).map_err(|e| TestingError::FailedToDeserialize(e))
-        })
+        .and_then(
+            |v| serde_json::from_value::<T>(v).map_err(|e| TestingError::FailedToDeserialize(e))
+        )
 }
 
 #[test]
@@ -54,7 +54,7 @@ fn v100_100() {
     let profile = vector::<Profile>("only_plaintext_profile_snapshot_version_100")
         .expect("V100 Profile to deserialize");
     assert_eq!(
-        profile.header().snapshot_version(),
+        profile.header.snapshot_version,
         ProfileSnapshotVersion::V100
     );
 }
