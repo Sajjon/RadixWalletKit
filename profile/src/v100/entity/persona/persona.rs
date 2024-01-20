@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
 
+use super::PersonaData;
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Hash, Eq, uniffi::Record)]
 #[serde(rename_all = "camelCase")]
 pub struct Persona {
@@ -136,15 +138,11 @@ impl HasPlaceholder for Persona {
     }
 }
 
-/// Empty struct to act as placeholder for PersonaData, `todo`
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Hash, Eq, Default, uniffi::Record)]
-pub struct PersonaData {}
-
 #[cfg(test)]
 mod tests {
     use crate::{
         prelude::*,
-        v100::entity::persona::{Persona, PersonaData},
+        v100::entity::persona::{Persona, persona_data::PersonaData},
     };
     use identified_vec::Identifiable;
     use std::str::FromStr;
