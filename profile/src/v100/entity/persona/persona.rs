@@ -7,7 +7,9 @@ use crate::prelude::*;
 
 use super::PersonaData;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Hash, Eq, uniffi::Record)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Hash, Eq, uniffi::Record,
+)]
 #[serde(rename_all = "camelCase")]
 pub struct Persona {
     /// The ID of the network this account can be used with.
@@ -44,17 +46,19 @@ impl Persona {
         display_name: DisplayName,
         persona_data: PersonaData,
     ) -> Self {
-        let address = IdentityAddress::from_hd_factor_instance_virtual_entity_creation(
-            persona_creating_factor_instance.clone(),
-        );
+        let address =
+            IdentityAddress::from_hd_factor_instance_virtual_entity_creation(
+                persona_creating_factor_instance.clone(),
+            );
         Self {
             network_id: persona_creating_factor_instance.network_id().into(),
             address,
             display_name,
-            security_state: UnsecuredEntityControl::with_entity_creating_factor_instance(
-                persona_creating_factor_instance,
-            )
-            .into(),
+            security_state:
+                UnsecuredEntityControl::with_entity_creating_factor_instance(
+                    persona_creating_factor_instance,
+                )
+                .into(),
             flags: EntityFlags::default().into(),
             persona_data,
         }
@@ -66,8 +70,13 @@ impl Persona {
         name: &str,
     ) -> Self {
         let mwp = MnemonicWithPassphrase::placeholder();
-        let bdfs = DeviceFactorSource::babylon(true, mwp.clone(), WalletClientModel::Iphone);
-        let private_hd_factor_source = PrivateHierarchicalDeterministicFactorSource::new(mwp, bdfs);
+        let bdfs = DeviceFactorSource::babylon(
+            true,
+            mwp.clone(),
+            WalletClientModel::Iphone,
+        );
+        let private_hd_factor_source =
+            PrivateHierarchicalDeterministicFactorSource::new(mwp, bdfs);
         let persona_creating_factor_instance: HDFactorInstanceTransactionSigning<IdentityPath> =
             private_hd_factor_source.derive_entity_creation_factor_instance(network_id, index);
 
@@ -142,7 +151,7 @@ impl HasPlaceholder for Persona {
 mod tests {
     use crate::{
         prelude::*,
-        v100::entity::persona::{Persona, persona_data::PersonaData},
+        v100::entity::persona::{persona_data::PersonaData, Persona},
     };
     use identified_vec::Identifiable;
     use std::str::FromStr;
@@ -388,14 +397,22 @@ mod tests {
 
     #[test]
     fn placeholder_stokenet() {
-        let persona = Persona::placeholder_at_index_name_network(NetworkID::Stokenet, 1, "Batman");
+        let persona = Persona::placeholder_at_index_name_network(
+            NetworkID::Stokenet,
+            1,
+            "Batman",
+        );
         assert_eq!(persona.display_name.value, "Batman".to_string());
         assert_eq!(persona.network_id, NetworkID::Stokenet);
     }
 
     #[test]
     fn placeholder_stokenet_satoshi() {
-        let persona = Persona::placeholder_at_index_name_network(NetworkID::Stokenet, 0, "Satoshi");
+        let persona = Persona::placeholder_at_index_name_network(
+            NetworkID::Stokenet,
+            0,
+            "Satoshi",
+        );
         assert_eq!(persona.display_name.value, "Satoshi".to_string());
         assert_eq!(persona.network_id, NetworkID::Stokenet);
     }
