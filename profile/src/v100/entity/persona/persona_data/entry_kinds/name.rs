@@ -56,12 +56,29 @@ impl HasPlaceholder for Name {
     }
 }
 
+impl Default for Name {
+    fn default() -> Self {
+        Self {
+            variant: Default::default(),
+            family_name: Default::default(),
+            given_name: Default::default(),
+            nickname: Default::default(),
+        }
+    }
+}
+
 #[derive(
     Serialize, Deserialize, Clone, Debug, PartialEq, Hash, Eq, uniffi::Enum,
 )]
 pub enum Variant {
     Western,
     Eastern,
+}
+
+impl Default for Variant {
+    fn default() -> Self {
+        Self::Western
+    }
 }
 
 #[cfg(test)]
