@@ -58,6 +58,7 @@ impl HasPlaceholder for Name {
 
 impl Default for Name {
     fn default() -> Self {
+        todo!("Better default values for name, impl NonEmptyString?");
         Self {
             variant: Default::default(),
             family_name: Default::default(),
@@ -84,6 +85,7 @@ impl Default for Variant {
 #[cfg(test)]
 mod tests {
     use crate::{
+        assert_eq_after_json_roundtrip,
         v100::entity::persona::{Name, Variant},
         HasPlaceholder,
     };
@@ -122,5 +124,35 @@ mod tests {
     fn display_eastern() {
         let placeholder = Name::placeholder_other();
         assert_eq!(format!("{placeholder}"), "Jun-fan Bruce Lee")
+    }
+
+    #[test]
+    fn json_roundtrip_placeholder() {
+        let model = Name::placeholder();
+        assert_eq_after_json_roundtrip(
+            &model,
+            r#"{
+                                "variant": "Western",
+                                "family_name": "Wayne",
+                                "given_name": "Bruce",
+                                "nickname": "Batman"
+                            }
+                            "#,
+        )
+    }
+
+    #[test]
+    fn json_roundtrip_placeholder_other() {
+        let model = Name::placeholder_other();
+        assert_eq_after_json_roundtrip(
+            &model,
+            r#"{
+                                "variant": "Eastern",
+                                "family_name": "Jun-fan",
+                                "given_name": "Lee",
+                                "nickname": "Bruce"
+                            }
+                            "#,
+        )
     }
 }

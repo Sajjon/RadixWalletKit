@@ -1,12 +1,27 @@
+use super::IdentifiedEntry;
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
-use super::IdentifiedEntry;
-
 #[derive(
-    Serialize, Deserialize, Clone, Debug, PartialEq, Hash, Eq, uniffi::Record,
+    Serialize,
+    Deserialize,
+    Clone,
+    Debug,
+    PartialEq,
+    Hash,
+    Eq,
+    Display,
+    uniffi::Record,
 )]
+#[display("{}", name)]
 pub struct PersonaData {
     name: IdentifiedEntry,
+}
+
+impl PersonaData {
+    pub fn new(name: IdentifiedEntry) -> Self {
+        Self { name }
+    }
 }
 
 impl Default for PersonaData {
