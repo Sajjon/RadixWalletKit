@@ -1,0 +1,48 @@
+repos:
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.17.2
+    hooks:
+      - id: typos
+  - repo: local
+    hooks:
+      - id: fmt
+        name: fmt
+        language: system
+        types: [file, rust]
+        entry: cargo fmt -- --check
+        pass_filenames: false
+
+      - id: clippy
+        name: clippy
+        language: system
+        types: [file, rust]
+        entry: cargo clippy --all -- -D warnings # Use -D warnings option to ensure the job fails when encountering warnings
+        pass_filenames: false
+
+      - id: unit tests
+        name: unit tests
+        language: system
+        types: [file, rust]
+        entry: cargo test --lib
+        pass_filenames: false
+
+      - id: doc tests
+        name: doc tests
+        language: system
+        types: [file, rust]
+        entry: cargo test --doc
+        pass_filenames: false
+
+      - id: vectors integration tests
+        name: vectors integration tests
+        language: system
+        types: [file, rust]
+        entry: cargo test --package profile --test vectors
+        pass_filenames: false
+
+      - id: uniffi bindgen tests
+        name: uniffi bindgen tests
+        language: system
+        types: [file, rust]
+        entry: bash -c 'exec env CLASSPATH="$PWD/jna-5.13.0.jar"' && bash -c 'exec env JAVA_OPTS="-Xmx8g"' && cargo test --package profile --test uniffi
+        pass_filenames: false
